@@ -222,7 +222,8 @@ function desenharPreview(placasL, placasA, painel, modelo, fundo){
     ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.stroke();
   }
 
-  const boxW=220, boxH=60;
+  // Retângulo central com nome e resolução
+  const boxW=220, boxH=70;
   ctx.fillStyle='rgba(0,0,0,0.7)';
   ctx.strokeStyle='rgba(255,255,255,0.7)';
   ctx.lineWidth=2;
@@ -233,9 +234,15 @@ function desenharPreview(placasL, placasA, painel, modelo, fundo){
   ctx.font='bold 14px monospace';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  ctx.fillText(`MODELO: ${modelo.toUpperCase()}`,cx,cy-18);
-  ctx.fillText(`TAMANHO: ${tamanhoL}m x ${tamanhoA}m`,cx,cy);
-  ctx.fillText(`RESOLUÇÃO: ${resolL} x ${resolA}`,cx,cy+18);
+
+  const tamanhoL = (placasL*painel.larguraMM/1000).toFixed(2);
+  const tamanhoA = (placasA*painel.alturaMM/1000).toFixed(2);
+  const resolL = placasL*painel.pxL;
+  const resolA = placasA*painel.pxA;
+
+  ctx.fillText(`MODELO: ${modelo.toUpperCase()}`, cx, cy-20);
+  ctx.fillText(`RESOLUÇÃO: ${resolL} x ${resolA}`, cx, cy);
+  ctx.fillText(`TAMANHO: ${tamanhoL}m x ${tamanhoA}m`, cx, cy+20);
 }
 
 atualizar();
