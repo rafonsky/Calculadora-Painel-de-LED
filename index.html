@@ -1,86 +1,29 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Calculadora de Painel de LED</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-
-    h1, h2 {
-      text-align: center;
-    }
-
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-
-    input, select, button {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      box-sizing: border-box;
-    }
-
-    button {
-      margin-top: 12px;
-      background: #333;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 3px;
-    }
-
-    .box {
-      background: #fff;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 5px;
-    }
-
-    table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-      background: #fff;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-
-    th {
-      background: #ddd;
-    }
-
-    .message {
-      margin-top: 10px;
-      padding: 8px;
-      border-radius: 3px;
-      display: none;
-    }
-
-    .success {
-      background: #d4edda;
-      color: #155724;
-    }
-
-    .error {
-      background: #f8d7da;
-      color: #721c24;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Calculadora de Painel de LED</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
+  }
+  h1, h2 { text-align: center; }
+  label { display: block; margin-top: 10px; font-weight: bold; }
+  input, select, button { width: 100%; padding: 8px; margin-top: 4px; }
+  button { margin-top: 12px; font-size: 16px; cursor: pointer; border: none; }
+  #calcular { background-color: #28a745; color: #fff; }
+  #toggleCadastro { background-color: #ff9800; color: #fff; }
+  .box { background: #fff; padding: 15px; margin-top: 20px; border-radius: 5px; }
+  table { width: 100%; margin-top: 20px; border-collapse: collapse; background: #fff; }
+  th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+  th { background: #ddd; }
+  table tr:nth-child(even) { background-color: #f9f9f9; }
+  canvas { display: block; margin: 20px auto; border:1px solid #333; }
+</style>
 </head>
 <body>
 
@@ -98,10 +41,10 @@
   <label>Modelo do painel</label>
   <select id="modelo"></select>
 
-  <button onclick="calcular()">Calcular</button>
+  <button id="calcular" onclick="calcular()">Calcular</button>
 </div>
 
-<button onclick="toggleCadastro()">➕ Adicionar painel</button>
+<button id="toggleCadastro" onclick="toggleCadastro()">➕ Adicionar painel</button>
 
 <div class="box" id="cadastroPainel" style="display:none;">
   <h2>Cadastrar Novo Painel</h2>
@@ -122,8 +65,6 @@
   <input type="number" id="novoPxA">
 
   <button onclick="adicionarPainel()">Adicionar painel</button>
-
-  <div id="mensagem" class="message"></div>
 </div>
 
 <table>
@@ -150,107 +91,151 @@
   </tr>
 </table>
 
+<table>
+  <tr>
+    <th>Área Total (m²)</th>
+    <th>Densidade de Pixels (px/m²)</th>
+  </tr>
+  <tr>
+    <td id="rArea">-</td>
+    <td id="rDensidade">-</td>
+  </tr>
+</table>
+
+<h2>Prévia do Painel</h2>
+<canvas id="preview"></canvas>
+
 <script>
-  const paineis = {};
+let paineis = JSON.parse(localStorage.getItem('paineis')) || {};
 
-  // Carrega painéis do LocalStorage ao iniciar
-  window.onload = () => {
-    const dados = localStorage.getItem('paineis');
-    if(dados) {
-      Object.assign(paineis, JSON.parse(dados));
-      atualizarSelect();
+function salvarLocalStorage() {
+  localStorage.setItem('paineis', JSON.stringify(paineis));
+}
+
+function toggleCadastro() {
+  const div = document.getElementById("cadastroPainel");
+  div.style.display = div.style.display === "none" ? "block" : "none";
+}
+
+function atualizarSelect() {
+  const select = document.getElementById("modelo");
+  select.innerHTML = '<option value="">Selecione</option>';
+  for (let nome in paineis) {
+    const opt = document.createElement("option");
+    opt.value = nome;
+    opt.textContent = nome;
+    select.appendChild(opt);
+  }
+}
+
+function adicionarPainel() {
+  const nome = novoNome.value.trim();
+  const larguraCM = Number(novoLargura.value);
+  const alturaCM = Number(novoAltura.value);
+  const pxL = Number(novoPxL.value);
+  const pxA = Number(novoPxA.value);
+
+  if (!nome || !larguraCM || !alturaCM || !pxL || !pxA) {
+    alert("Preencha todos os campos do painel");
+    return;
+  }
+
+  paineis[nome] = {
+    larguraMM: larguraCM * 10,
+    alturaMM: alturaCM * 10,
+    pxL, pxA
+  };
+
+  salvarLocalStorage();
+  atualizarSelect();
+
+  novoNome.value = "";
+  novoLargura.value = "";
+  novoAltura.value = "";
+  novoPxL.value = "";
+  novoPxA.value = "";
+
+  toggleCadastro();
+  alert("Painel cadastrado com sucesso!");
+}
+
+function calcular() {
+  const larguraM = Number(painelLargura.value);
+  const alturaM = Number(painelAltura.value);
+  const modelo = document.getElementById("modelo").value;
+
+  if (!larguraM || !alturaM || !modelo) {
+    alert("Preencha o painel e selecione o modelo");
+    return;
+  }
+
+  const painel = paineis[modelo];
+
+  const placasL = Math.ceil((larguraM * 1000) / painel.larguraMM);
+  const placasA = Math.ceil((alturaM * 1000) / painel.alturaMM);
+  const total = placasL * placasA;
+
+  const tamanhoFinalL = (placasL * painel.larguraMM / 1000).toFixed(2);
+  const tamanhoFinalA = (placasA * painel.alturaMM / 1000).toFixed(2);
+
+  const resolucaoL = placasL * painel.pxL;
+  const resolucaoA = placasA * painel.pxA;
+
+  const area = (tamanhoFinalL * tamanhoFinalA).toFixed(2);
+  const densidade = Math.round((resolucaoL * resolucaoA) / area);
+
+  rPlacasL.innerText = placasL;
+  rPlacasA.innerText = placasA;
+  rTotal.innerText = total;
+  rTamanho.innerText = `${tamanhoFinalL} x ${tamanhoFinalA}`;
+  rResolucao.innerText = `${resolucaoL} x ${resolucaoA}`;
+  rArea.innerText = area;
+  rDensidade.innerText = densidade;
+
+  desenharPreview(placasL, placasA, painel);
+}
+
+function desenharPreview(placasL, placasA, painel) {
+  const canvas = document.getElementById("preview");
+  const ctx = canvas.getContext("2d");
+
+  // Define tamanho máximo do canvas
+  const maxWidth = 600;
+  const maxHeight = 400;
+
+  // Proporção real da placa
+  const proporcaoPlaca = painel.alturaMM / painel.larguraMM;
+
+  // Calcula altura e largura do canvas mantendo proporção
+  let canvasWidth = maxWidth;
+  let canvasHeight = canvasWidth * (placasA * painel.alturaMM) / (placasL * painel.larguraMM);
+
+  if(canvasHeight > maxHeight){
+    const scale = maxHeight / canvasHeight;
+    canvasHeight = maxHeight;
+    canvasWidth = canvasWidth * scale;
+  }
+
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const larguraPlaca = canvas.width / placasL;
+  const alturaPlaca = canvas.height / placasA;
+
+  for(let i=0; i<placasL; i++){
+    for(let j=0; j<placasA; j++){
+      ctx.fillStyle = "#4CAF50";
+      ctx.fillRect(i*larguraPlaca, j*alturaPlaca, larguraPlaca-2, alturaPlaca-2);
+      ctx.strokeStyle = "#333";
+      ctx.strokeRect(i*larguraPlaca, j*alturaPlaca, larguraPlaca-2, alturaPlaca-2);
     }
   }
+}
 
-  function toggleCadastro() {
-    const div = document.getElementById("cadastroPainel");
-    div.style.display = div.style.display === "none" ? "block" : "none";
-  }
-
-  function atualizarSelect() {
-    const select = document.getElementById("modelo");
-    select.innerHTML = '<option value="">Selecione</option>';
-    for (let nome in paineis) {
-      const opt = document.createElement("option");
-      opt.value = nome;
-      opt.textContent = nome;
-      select.appendChild(opt);
-    }
-  }
-
-  function mostrarMensagem(texto, tipo="success") {
-    const msg = document.getElementById("mensagem");
-    msg.innerText = texto;
-    msg.className = `message ${tipo}`;
-    msg.style.display = "block";
-    setTimeout(()=>{ msg.style.display="none"; }, 3000);
-  }
-
-  function adicionarPainel() {
-    const nome = novoNome.value.trim();
-    const larguraCM = Number(novoLargura.value);
-    const alturaCM = Number(novoAltura.value);
-    const pxL = Number(novoPxL.value);
-    const pxA = Number(novoPxA.value);
-
-    if (!nome || !larguraCM || !alturaCM || !pxL || !pxA) {
-      mostrarMensagem("Preencha todos os campos!", "error");
-      return;
-    }
-
-    paineis[nome] = {
-      larguraMM: larguraCM * 10,
-      alturaMM: alturaCM * 10,
-      pxL,
-      pxA
-    };
-
-    // Salva no navegador
-    localStorage.setItem('paineis', JSON.stringify(paineis));
-
-    atualizarSelect();
-
-    // Limpa campos
-    novoNome.value = "";
-    novoLargura.value = "";
-    novoAltura.value = "";
-    novoPxL.value = "";
-    novoPxA.value = "";
-
-    mostrarMensagem("Painel cadastrado com sucesso!", "success");
-
-    // Fecha cadastro automaticamente
-    toggleCadastro();
-  }
-
-  function calcular() {
-    const larguraM = Number(painelLargura.value);
-    const alturaM = Number(painelAltura.value);
-    const modelo = document.getElementById("modelo").value;
-
-    if (!larguraM || !alturaM || !modelo) {
-      alert("Preencha o painel e selecione o modelo");
-      return;
-    }
-
-    const painel = paineis[modelo];
-
-    const placasL = Math.ceil((larguraM * 1000) / painel.larguraMM);
-    const placasA = Math.ceil((alturaM * 1000) / painel.alturaMM);
-    const total = placasL * placasA;
-
-    const tamanhoFinalL = (placasL * painel.larguraMM / 1000).toFixed(2);
-    const tamanhoFinalA = (placasA * painel.alturaMM / 1000).toFixed(2);
-
-    const resolucaoL = placasL * painel.pxL;
-    const resolucaoA = placasA * painel.pxA;
-
-    rPlacasL.innerText = placasL;
-    rPlacasA.innerText = placasA;
-    rTotal.innerText = total;
-    rTamanho.innerText = `${tamanhoFinalL} x ${tamanhoFinalA}`;
-    rResolucao.innerText = `${resolucaoL} x ${resolucaoA}`;
-  }
+// Inicializa select com LocalStorage
+atualizarSelect();
 </script>
 
 </body>
