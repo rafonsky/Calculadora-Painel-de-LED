@@ -2,131 +2,552 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Calculadora de Painel de LED</title>
+<title>Calculadora Profissional de Painel LED - Multi-Painel</title>
 
 <style>
+/* =========================
+   RESET E BASE
+========================= */
+*{box-sizing:border-box}
+
 body{
   margin:0;
-  font-family:Arial, sans-serif;
-  background:#222;
-  color:#fff;
+  font-family:Inter, Arial, sans-serif;
+  background:#1b1e23;
+  color:#eaeaea;
 }
 
-h1{text-align:center;margin:10px 0;}
+/* =========================
+   TÍTULOS
+========================= */
+h1{
+  text-align:center;
+  margin:16px 0 4px;
+  font-size:26px;
+}
 
+.subtitle{
+  text-align:center;
+  color:#9aa0a6;
+  font-size:14px;
+  margin-bottom:12px;
+}
+
+/* =========================
+   LAYOUT PRINCIPAL
+========================= */
 .container{
   display:flex;
   gap:20px;
   padding:20px;
+  height:calc(100vh - 100px);
+  max-height:calc(100vh - 100px);
+  overflow:hidden;
 }
 
 .left{
-  width:360px;
-  background:#333;
-  padding:15px;
-  border-radius:8px;
+  width:420px;
+  background:#252932;
+  padding:16px;
+  border-radius:12px;
   overflow-y:auto;
 }
 
 .right{
   flex:1;
   display:flex;
-  justify-content:center;
-  align-items:center;
-  height:calc(100vh - 120px); /* IMPORTANTE: trava crescimento */
+  flex-direction:column;
+  gap:12px;
 }
 
-label{display:block;margin-top:10px;font-weight:bold;}
+.preview-container{
+  flex:1;
+  min-height:0;
+  display:flex;
+  justify-content:flex-start;
+  align-items:flex-start;
+  position:relative;
+  background:#1a1d22;
+  border-radius:12px;
+  overflow:hidden;
+  padding:10px;
+}
+
+.totalizador{
+  background:#252932;
+  padding:16px;
+  border-radius:12px;
+  flex-shrink:0;
+  max-height:200px;
+}
+
+/* =========================
+   SEÇÕES
+========================= */
+.section{
+  margin-bottom:18px;
+}
+
+.section h2{
+  font-size:14px;
+  color:#4fc3f7;
+  margin:0 0 10px;
+  border-bottom:1px solid #333;
+  padding-bottom:6px;
+}
+
+/* =========================
+   FORMULÁRIOS
+========================= */
+label{
+  display:block;
+  margin-top:10px;
+  font-size:13px;
+  color:#b0b6bd;
+}
 
 input,select,button{
   width:100%;
-  padding:8px;
+  padding:9px;
   margin-top:4px;
-  border-radius:6px;
+  border-radius:8px;
+  border:none;
+  font-size:14px;
+}
+
+input,select{
+  background:#2f3440;
+  color:#fff;
+}
+
+input[type="color"]{
+  padding:4px;
+  height:36px;
+}
+
+/* =========================
+   BOTÕES
+========================= */
+button{
+  cursor:pointer;
+  font-weight:600;
+}
+
+.btn-primary{background:#2196f3;color:#fff;}
+.btn-green{background:#2e7d32;color:#fff;}
+.btn-red{background:#c62828;color:#fff;}
+.btn-orange{background:#f57c00;color:#fff;}
+
+.btn-outline{
+  background:transparent;
+  border:1px solid #555;
+  color:#ccc;
+}
+
+button+button{margin-top:6px}
+
+/* =========================
+   AÇÕES DE MODELO
+========================= */
+.model-actions{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+
+.novo-painel{
+  display:none;
+  margin-top:12px;
+  padding:12px;
+  background:#1f232b;
+  border:1px dashed #444;
+  border-radius:10px;
+}
+
+/* =========================
+   LISTA DE PAINÉIS
+========================= */
+.paineis-lista{
+  max-height:300px;
+  overflow-y:auto;
+  margin-top:10px;
+}
+
+.painel-item{
+  background:#1f232b;
+  padding:12px;
+  margin-bottom:8px;
+  border-radius:8px;
+  border:2px solid transparent;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+
+.painel-item:hover{
+  border-color:#444;
+}
+
+.painel-item.selecionado{
+  border-color:#4fc3f7;
+  background:#252d38;
+}
+
+.painel-item-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
+
+.painel-item-nome{
+  font-weight:600;
+  color:#4fc3f7;
+}
+
+.painel-item-acoes{
+  display:flex;
+  gap:6px;
+}
+
+.btn-mini{
+  padding:4px 8px;
+  font-size:11px;
+  border-radius:4px;
+  cursor:pointer;
   border:none;
 }
 
-input,select{background:#444;color:#fff;}
-
-button{font-weight:bold;cursor:pointer;}
-
-canvas{
-  border:1px solid #555;
-  border-radius:8px;
+.painel-item-info{
+  font-size:12px;
+  color:#9aa0a6;
 }
 
-.btn-green{background:#28a745;}
-.btn-blue{background:#2196f3;}
-.btn-red{background:#e53935;}
-.btn-orange{background:#ff9800;margin-top:6px;}
-.btn-cyan{background:#03a9f4;margin-top:6px;}
+.painel-item-info div{
+  margin:2px 0;
+}
 
+/* =========================
+   PAINEL TÉCNICO
+========================= */
+.tech-info div{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid #333;
+  font-size:13px;
+}
+
+.tech-info span{color:#aaa}
+.tech-info strong{color:#4fc3f7}
+
+/* =========================
+   TOTALIZADOR
+========================= */
+.totalizador h2{
+  font-size:16px;
+  color:#4fc3f7;
+  margin:0 0 12px;
+  text-align:center;
+}
+
+.totalizador-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:12px;
+}
+
+.totalizador-card{
+  background:#1f232b;
+  padding:12px;
+  border-radius:8px;
+  text-align:center;
+}
+
+.totalizador-label{
+  font-size:11px;
+  color:#9aa0a6;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+
+.totalizador-valor{
+  font-size:20px;
+  font-weight:700;
+  color:#4fc3f7;
+}
+
+.totalizador-unidade{
+  font-size:12px;
+  color:#aaa;
+  margin-left:4px;
+}
+
+/* =========================
+   CANVAS E PAINÉIS
+========================= */
+canvas{
+  background:#000;
+  border-radius:14px;
+  box-shadow:
+    0 0 0 1px #333,
+    0 20px 60px rgba(0,0,0,.7);
+  max-width:100%;
+  max-height:100%;
+  cursor:move;
+}
+
+.painel-canvas{
+  position:absolute;
+  cursor:move;
+  border:2px solid transparent;
+  transition:border-color 0.2s;
+  pointer-events:auto;
+  z-index:1;
+}
+
+.painel-canvas.selecionado{
+  border-color:#4fc3f7;
+  box-shadow:0 0 20px rgba(79,195,247,0.5);
+  z-index:10;
+}
+
+.painel-canvas:hover{
+  border-color:#ffeb3b;
+  z-index:5;
+}
+
+.painel-canvas:active{
+  cursor:grabbing;
+  border-color:#4fc3f7;
+}
+
+.painel-label{
+  position:absolute;
+  top:-20px;
+  left:0;
+  background:rgba(79,195,247,0.9);
+  color:#000;
+  padding:2px 8px;
+  border-radius:4px;
+  font-size:11px;
+  font-weight:600;
+  pointer-events:none;
+}
+
+.controles-canvas{
+  position:absolute;
+  top:10px;
+  right:10px;
+  display:flex;
+  gap:8px;
+}
+
+.btn-canvas{
+  background:rgba(37,41,50,0.95);
+  border:1px solid #555;
+  color:#fff;
+  padding:8px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
+}
+
+.btn-canvas:hover{
+  background:#2196f3;
+  border-color:#2196f3;
+}
+
+/* =========================
+   FOOTER
+========================= */
 footer{
   text-align:center;
-  font-size:13px;
-  color:#aaa;
+  font-size:12px;
+  color:#777;
   padding:10px;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+@media (max-width:900px){
+  .container{
+    flex-direction:column;
+    height:auto;
+    max-height:none;
+  }
+  .left{width:100%;max-height:50vh;overflow-y:auto;}
+  .right{height:auto;min-height:400px;}
+  .preview-container{min-height:300px;}
+}
+
+/* =========================
+   SCROLLBAR CUSTOMIZADA
+========================= */
+::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+
+::-webkit-scrollbar-track{
+  background:#1b1e23;
+}
+
+::-webkit-scrollbar-thumb{
+  background:#444;
+  border-radius:4px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+  background:#555;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Calculadora de Painel de LED</h1>
+<h1>Calculadora de Painel LED - Multi-Painel</h1>
+<div class="subtitle">Composição livre com arrastar/posicionar + Totalizador de projeto</div>
 
 <div class="container">
 
-<!-- CONTROLES -->
+<!-- ======================
+     COLUNA DE CONTROLES
+====================== -->
 <div class="left">
 
-<label>Layout do preview</label>
-<select id="layout">
-  <option value="test">Test Pattern</option>
-  <option value="clean">Clean</option>
-</select>
+  <!-- ADICIONAR PAINEL -->
+  <div class="section">
+    <h2>Adicionar Painel</h2>
 
-<label><input type="checkbox" id="grid" checked> Mostrar grid</label>
-<label><input type="checkbox" id="numeros" checked> Mostrar numeração</label>
+    <label>Nome do painel</label>
+    <input id="nomePainel" type="text" placeholder="Ex: Painel Principal">
 
-<label>Cor fundo (clean)</label>
-<input type="color" id="cor" value="#ffffff">
+    <label>Largura total (m)</label>
+    <input id="largura" type="number" step="0.01" value="3">
 
-<label>Logo do cliente</label>
-<input type="file" id="logo" accept="image/*">
+    <label>Altura total (m)</label>
+    <input id="altura" type="number" step="0.01" value="2">
 
-<label>Largura painel (m)</label>
-<input id="largura" type="number" step="0.01">
+    <label>Modelo do gabinete</label>
+    <select id="modelo"></select>
 
-<label>Altura painel (m)</label>
-<input id="altura" type="number" step="0.01">
+    <!-- BOTÕES DO MODELO -->
+    <div class="model-actions">
+      <button class="btn-outline" id="btnNovo">➕ Novo modelo</button>
+      <button class="btn-red" id="btnExcluir">🗑 Excluir</button>
+    </div>
 
-<label>Modelo</label>
-<select id="modelo"></select>
+    <!-- FORMULÁRIO NOVO MODELO -->
+    <div id="boxNovo" class="novo-painel">
+      <label>Nome do modelo</label>
+      <input id="npNome">
 
-<button class="btn-blue" id="btnNovo">➕ Novo painel</button>
-<button class="btn-red" id="btnExcluir">🗑 Excluir painel</button>
+      <label>Largura gabinete (mm)</label>
+      <input id="npL" type="number">
 
-<div id="boxNovo" style="display:none;margin-top:10px">
-  <label>Nome</label><input id="npNome">
-  <label>Largura (mm)</label><input id="npL">
-  <label>Altura (mm)</label><input id="npA">
-  <label>Pixels L</label><input id="npPxL">
-  <label>Pixels A</label><input id="npPxA">
-  <label>Potência média (W/m²)</label><input id="npMed">
-  <label>Potência máx (W/m²)</label><input id="npMax">
-  <label>Tensão (V)</label><input id="npV" value="220">
-  <button class="btn-green" id="salvarPainel">Salvar</button>
+      <label>Altura gabinete (mm)</label>
+      <input id="npA" type="number">
+
+      <label>Pixels largura</label>
+      <input id="npPxL" type="number">
+
+      <label>Pixels altura</label>
+      <input id="npPxA" type="number">
+
+      <label>Potência média (W/m²)</label>
+      <input id="npMed" type="number">
+
+      <label>Potência máxima (W/m²)</label>
+      <input id="npMax" type="number">
+
+      <button class="btn-green" id="salvarModelo">Salvar modelo</button>
+    </div>
+
+    <button class="btn-primary" id="adicionarPainel">➕ Adicionar ao Projeto</button>
+  </div>
+
+  <!-- PAINÉIS DO PROJETO -->
+  <div class="section">
+    <h2>Painéis do Projeto (<span id="contadorPaineis">0</span>)</h2>
+    <div class="paineis-lista" id="painelisLista"></div>
+    <button class="btn-red" id="limparTodos" style="margin-top:10px">🗑 Limpar Todos</button>
+  </div>
+
+  <!-- VISUAL -->
+  <div class="section">
+    <h2>Visualização</h2>
+
+    <label>Layout</label>
+    <select id="layout">
+      <option value="test">Test Pattern</option>
+      <option value="clean">Clean</option>
+    </select>
+
+    <label><input type="checkbox" id="grid" checked> Mostrar grid</label>
+
+    <label>Cor de fundo</label>
+    <input type="color" id="cor" value="#ffffff">
+
+    <label>Logo do cliente</label>
+    <input type="file" id="logo" accept="image/*">
+  </div>
+
+  <!-- EXPORTAÇÃO -->
+  <div class="section">
+    <h2>Exportação</h2>
+    <button class="btn-outline" id="exportTech">📸 Exportar técnico</button>
+    <button class="btn-green" id="exportCliente">🧾 Exportar cliente</button>
+    <button class="btn-orange" id="exportRelatorio">📋 Exportar relatório PDF</button>
+  </div>
+
 </div>
 
-<button class="btn-green" id="calcular">Calcular</button>
-<button class="btn-orange" id="exportTech">📸 Exportar técnico</button>
-<button class="btn-cyan" id="exportCliente">🧾 Exportar cliente</button>
-
-</div>
-
-<!-- PREVIEW -->
+<!-- ======================
+     PREVIEW E TOTALIZADOR
+====================== -->
 <div class="right">
-  <canvas id="preview"></canvas>
+  
+  <!-- PREVIEW COM COMPOSIÇÃO LIVRE -->
+  <div class="preview-container" id="previewContainer">
+    <div class="controles-canvas">
+      <button class="btn-canvas" id="btnReorganizar">🔄 Auto-organizar</button>
+      <button class="btn-canvas" id="btnZoomFit">🔍 Ajustar zoom</button>
+    </div>
+  </div>
+
+  <!-- TOTALIZADOR DO PROJETO -->
+  <div class="totalizador">
+    <h2>📊 Totalizador do Projeto</h2>
+    <div class="totalizador-grid">
+      <div class="totalizador-card">
+        <div class="totalizador-label">Total Painéis</div>
+        <div class="totalizador-valor" id="totPaineis">0</div>
+      </div>
+      <div class="totalizador-card">
+        <div class="totalizador-label">Total Módulos</div>
+        <div class="totalizador-valor" id="totModulos">0</div>
+      </div>
+      <div class="totalizador-card">
+        <div class="totalizador-label">Resolução Total</div>
+        <div class="totalizador-valor" id="totResolucao">0x0</div>
+      </div>
+      <div class="totalizador-card">
+        <div class="totalizador-label">Área Total</div>
+        <div class="totalizador-valor" id="totArea">0<span class="totalizador-unidade">m²</span></div>
+      </div>
+      <div class="totalizador-card">
+        <div class="totalizador-label">Consumo Médio</div>
+        <div class="totalizador-valor" id="totMedio">0<span class="totalizador-unidade">W</span></div>
+      </div>
+      <div class="totalizador-card">
+        <div class="totalizador-label">Consumo Máximo</div>
+        <div class="totalizador-valor" id="totMax">0<span class="totalizador-unidade">W</span></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 </div>
@@ -136,215 +557,745 @@ Desenvolvido por Rafonsky © <span id="ano"></span>
 </footer>
 
 <script>
-/* =========================
-   ESTADO GLOBAL
-========================= */
-const estado={
-  painel:null,
-  pl:0,
-  pa:0,
-  layout:"test",
-  grid:true,
-  numeros:true,
-  cor:"#ffffff",
-  logo:null
+/* =====================================================
+   ESTADO GLOBAL DA APLICAÇÃO
+===================================================== */
+const estado = {
+  paineis: [],        // Array de painéis do projeto
+  painelSelecionado: null,
+  layout: "test",
+  grid: true,
+  cor: "#ffffff",
+  logoImg: null,
+  escala: 100,       // Escala dinâmica (pixels por metro)
+  escalaBase: 100    // Escala base para cálculos
 };
 
-/* =========================
-   TEST PATTERN
-========================= */
-const imgTestPattern=new Image();
-imgTestPattern.src="test-pattern.png";
+/* =====================================================
+   IMAGEM DE TEST PATTERN
+===================================================== */
+const imgTestPattern = new Image();
+// Criar um pattern de teste dinâmico
+imgTestPattern.onload = () => {
+  console.log("Test pattern carregado");
+};
+imgTestPattern.onerror = () => {
+  console.log("Erro ao carregar test pattern, usando padrão dinâmico");
+};
+// Tentar carregar a imagem do arquivo
+imgTestPattern.src = "test-pattern.png";
 
-/* =========================
-   LIMITES FIXOS DO PREVIEW
-========================= */
-let previewBounds=null;
-
-function obterBoundsPreview(){
-  if(previewBounds) return previewBounds;
-  const r=preview.parentElement.getBoundingClientRect();
-  previewBounds={w:r.width,h:r.height};
-  return previewBounds;
+// Função para criar pattern de teste caso a imagem não carregue
+function criarTestPattern(ctx, w, h) {
+  const barWidth = w / 8;
+  const cores = [
+    '#ffffff', '#ffff00', '#00ffff', '#00ff00',
+    '#ff00ff', '#ff0000', '#0000ff', '#000000'
+  ];
+  
+  cores.forEach((cor, i) => {
+    ctx.fillStyle = cor;
+    ctx.fillRect(i * barWidth, 0, barWidth, h);
+  });
 }
 
-/* =========================
-   PAINÉIS (persistente)
-========================= */
-const paineis=JSON.parse(localStorage.getItem("paineis")) || {
-  "Painel 50x100":{
-    larguraMM:500,alturaMM:1000,
-    pxL:168,pxA:336,
-    medio:50,max:150,tensao:220
+/* =====================================================
+   MODELOS DE PAINEL (LOCALSTORAGE)
+===================================================== */
+const modelos = JSON.parse(localStorage.getItem("paineis")) || {
+  "Painel 50x100": {
+    larguraMM: 500,
+    alturaMM: 1000,
+    pxL: 168,
+    pxA: 336,
+    medio: 50,
+    max: 150
+  },
+  "Painel P2.5": {
+    larguraMM: 320,
+    alturaMM: 160,
+    pxL: 128,
+    pxA: 64,
+    medio: 250,
+    max: 800
+  },
+  "Painel P3": {
+    larguraMM: 192,
+    alturaMM: 192,
+    pxL: 64,
+    pxA: 64,
+    medio: 220,
+    max: 700
   }
 };
 
-function salvarPaineis(){
-  localStorage.setItem("paineis",JSON.stringify(paineis));
+function salvarModelos() {
+  localStorage.setItem("paineis", JSON.stringify(modelos));
 }
 
-function atualizarModelos(){
-  modelo.innerHTML="";
-  for(const p in paineis)
-    modelo.innerHTML+=`<option>${p}</option>`;
+function atualizarModelosSelect() {
+  modelo.innerHTML = "";
+  for (const m in modelos) {
+    modelo.innerHTML += `<option>${m}</option>`;
+  }
 }
-atualizarModelos();
+atualizarModelosSelect();
 
-/* =========================
-   EVENTOS UI
-========================= */
-layout.onchange=e=>{estado.layout=e.target.value; redraw();};
-grid.onchange=e=>{estado.grid=e.target.checked; redraw();};
-numeros.onchange=e=>{estado.numeros=e.target.checked; redraw();};
-cor.oninput=e=>{estado.cor=e.target.value; redraw();};
+/* =====================================================
+   CLASSE PAINEL
+===================================================== */
+class Painel {
+  constructor(nome, largura, altura, modeloNome) {
+    this.id = Date.now() + Math.random();
+    this.nome = nome || `Painel ${estado.paineis.length + 1}`;
+    this.largura = largura;
+    this.altura = altura;
+    this.modeloNome = modeloNome;
+    this.modelo = modelos[modeloNome];
+    
+    // Cálculos
+    this.pl = Math.ceil(largura * 1000 / this.modelo.larguraMM);
+    this.pa = Math.ceil(altura * 1000 / this.modelo.alturaMM);
+    this.area = largura * altura;
+    this.modulos = this.pl * this.pa;
+    this.resolucaoX = this.pl * this.modelo.pxL;
+    this.resolucaoY = this.pa * this.modelo.pxA;
+    this.consumoMedio = this.modelo.medio * this.area;
+    this.consumoMax = this.modelo.max * this.area;
+    
+    // Posição relativa (em metros, será multiplicada pela escala na renderização)
+    this.xMetros = 0;
+    this.yMetros = 0;
+    
+    // Dimensões no canvas (proporcionais)
+    this.larguraReal = largura;
+    this.alturaReal = altura;
+  }
+}
 
-logo.onchange=e=>{
-  const r=new FileReader();
-  r.onload=()=>{estado.logo=r.result; redraw();};
-  r.readAsDataURL(e.target.files[0]);
-};
+/* =====================================================
+   GERENCIAMENTO DE PAINÉIS
+===================================================== */
+function adicionarPainelAoProjeto() {
+  const nome = nomePainel.value || `Painel ${estado.paineis.length + 1}`;
+  const larg = +largura.value;
+  const alt = +altura.value;
+  const mod = modelo.value;
+  
+  if (!larg || !alt || !mod) {
+    alert("Preencha todos os campos!");
+    return;
+  }
+  
+  const painel = new Painel(nome, larg, alt, mod);
+  estado.paineis.push(painel);
+  
+  // Limpar campo nome (manter dimensões para facilitar adicionar vários painéis)
+  nomePainel.value = "";
+  
+  atualizarListaPaineis();
+  atualizarTotalizador();
+  
+  // Auto-organizar e ajustar zoom automaticamente
+  autoOrganizar();
+  
+  console.log("Painel adicionado:", painel);
+  console.log("Total de painéis:", estado.paineis.length);
+}
 
-btnNovo.onclick=()=>{
-  boxNovo.style.display=boxNovo.style.display==="none"?"block":"none";
-};
+function removerPainel(id) {
+  if (confirm("Remover este painel do projeto?")) {
+    estado.paineis = estado.paineis.filter(p => p.id !== id);
+    if (estado.painelSelecionado?.id === id) {
+      estado.painelSelecionado = null;
+    }
+    atualizarListaPaineis();
+    atualizarTotalizador();
+    renderizarCanvas();
+  }
+}
 
-salvarPainel.onclick=()=>{
-  paineis[npNome.value]={
-    larguraMM:+npL.value,
-    alturaMM:+npA.value,
-    pxL:+npPxL.value,
-    pxA:+npPxA.value,
-    medio:+npMed.value,
-    max:+npMax.value,
-    tensao:+npV.value
+function selecionarPainel(id) {
+  estado.painelSelecionado = estado.paineis.find(p => p.id === id);
+  atualizarListaPaineis();
+  renderizarCanvas();
+}
+
+function duplicarPainel(id) {
+  const original = estado.paineis.find(p => p.id === id);
+  if (original) {
+    const duplicado = new Painel(
+      original.nome + " (cópia)",
+      original.largura,
+      original.altura,
+      original.modeloNome
+    );
+    duplicado.x = original.x + 20;
+    duplicado.y = original.y + 20;
+    estado.paineis.push(duplicado);
+    atualizarListaPaineis();
+    atualizarTotalizador();
+    renderizarCanvas();
+  }
+}
+
+function limparTodosPaineis() {
+  if (confirm("Remover TODOS os painéis do projeto?")) {
+    estado.paineis = [];
+    estado.painelSelecionado = null;
+    atualizarListaPaineis();
+    atualizarTotalizador();
+    renderizarCanvas();
+  }
+}
+
+/* =====================================================
+   ATUALIZAÇÃO DA INTERFACE
+===================================================== */
+function atualizarListaPaineis() {
+  const lista = document.getElementById("painelisLista");
+  lista.innerHTML = "";
+  
+  estado.paineis.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "painel-item";
+    if (estado.painelSelecionado?.id === p.id) {
+      div.classList.add("selecionado");
+    }
+    
+    div.innerHTML = `
+      <div class="painel-item-header">
+        <div class="painel-item-nome">${p.nome}</div>
+        <div class="painel-item-acoes">
+          <button class="btn-mini btn-primary" onclick="duplicarPainel(${p.id})">📋</button>
+          <button class="btn-mini btn-red" onclick="removerPainel(${p.id})">🗑</button>
+        </div>
+      </div>
+      <div class="painel-item-info">
+        <div>📐 ${p.largura}m x ${p.altura}m (${p.area.toFixed(2)}m²)</div>
+        <div>🔲 ${p.modulos} módulos | ${p.resolucaoX}x${p.resolucaoY}px</div>
+        <div>⚡ ${p.consumoMedio.toFixed(0)}W / ${p.consumoMax.toFixed(0)}W</div>
+        <div>📦 ${p.modeloNome}</div>
+      </div>
+    `;
+    
+    div.onclick = () => selecionarPainel(p.id);
+    lista.appendChild(div);
+  });
+  
+  document.getElementById("contadorPaineis").textContent = estado.paineis.length;
+}
+
+function atualizarTotalizador() {
+  const total = {
+    paineis: estado.paineis.length,
+    modulos: 0,
+    area: 0,
+    medio: 0,
+    max: 0
   };
-  salvarPaineis();
-  atualizarModelos();
-  boxNovo.style.display="none";
-};
-
-btnExcluir.onclick=()=>{
-  if(confirm("Excluir painel?")){
-    delete paineis[modelo.value];
-    salvarPaineis();
-    atualizarModelos();
+  
+  if (estado.paineis.length === 0) {
+    document.getElementById("totPaineis").textContent = 0;
+    document.getElementById("totModulos").textContent = 0;
+    document.getElementById("totResolucao").textContent = "0x0";
+    document.getElementById("totArea").innerHTML = `0<span class="totalizador-unidade">m²</span>`;
+    document.getElementById("totMedio").innerHTML = `0<span class="totalizador-unidade">W</span>`;
+    document.getElementById("totMax").innerHTML = `0<span class="totalizador-unidade">W</span>`;
+    return;
   }
-};
-
-calcular.onclick=calcularPainel;
-
-/* =========================
-   CÁLCULO PRINCIPAL
-========================= */
-function calcularPainel(){
-  const p=paineis[modelo.value];
-  if(!p) return;
-
-  const w=+largura.value;
-  const h=+altura.value;
-
-  estado.pl=Math.ceil(w*1000/p.larguraMM);
-  estado.pa=Math.ceil(h*1000/p.alturaMM);
-  estado.painel=p;
-
-  redraw();
+  
+  // Calcular totais
+  estado.paineis.forEach(p => {
+    total.modulos += p.modulos;
+    total.area += p.area;
+    total.medio += p.consumoMedio;
+    total.max += p.consumoMax;
+  });
+  
+  // Calcular resolução total baseada no LAYOUT REAL dos painéis
+  // Encontrar bounds do layout em metros
+  let minX = Infinity, minY = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
+  
+  estado.paineis.forEach(p => {
+    minX = Math.min(minX, p.xMetros);
+    minY = Math.min(minY, p.yMetros);
+    maxX = Math.max(maxX, p.xMetros + p.largura);
+    maxY = Math.max(maxY, p.yMetros + p.altura);
+  });
+  
+  const larguraTotal = maxX - minX; // em metros
+  const alturaTotal = maxY - minY;  // em metros
+  
+  // Calcular pixels totais baseado no layout
+  // Precisamos descobrir quantos pixels cabem na área total
+  // Para isso, vamos pegar a densidade de pixels (px/m) de cada painel e interpolar
+  
+  // Método simples: somar resoluções dos painéis que ocupam cada eixo
+  let resolucaoTotalX = 0;
+  let resolucaoTotalY = 0;
+  
+  // Para X: painéis que estão lado a lado (mesmo Y aproximado)
+  const tolerance = 0.1; // 10cm de tolerância
+  const linhas = [];
+  
+  estado.paineis.forEach(p => {
+    // Verificar se já existe uma linha com Y similar
+    let linhaExistente = linhas.find(l => Math.abs(l.y - p.yMetros) < tolerance);
+    if (!linhaExistente) {
+      linhaExistente = { y: p.yMetros, paineis: [] };
+      linhas.push(linhaExistente);
+    }
+    linhaExistente.paineis.push(p);
+  });
+  
+  // Resolução X = soma da maior linha horizontal
+  let maiorResolucaoX = 0;
+  linhas.forEach(linha => {
+    const resX = linha.paineis.reduce((sum, p) => sum + p.resolucaoX, 0);
+    maiorResolucaoX = Math.max(maiorResolucaoX, resX);
+  });
+  resolucaoTotalX = maiorResolucaoX;
+  
+  // Para Y: painéis que estão empilhados (mesmo X aproximado)
+  const colunas = [];
+  estado.paineis.forEach(p => {
+    let colunaExistente = colunas.find(c => Math.abs(c.x - p.xMetros) < tolerance);
+    if (!colunaExistente) {
+      colunaExistente = { x: p.xMetros, paineis: [] };
+      colunas.push(colunaExistente);
+    }
+    colunaExistente.paineis.push(p);
+  });
+  
+  // Resolução Y = soma da maior coluna vertical
+  let maiorResolucaoY = 0;
+  colunas.forEach(coluna => {
+    const resY = coluna.paineis.reduce((sum, p) => sum + p.resolucaoY, 0);
+    maiorResolucaoY = Math.max(maiorResolucaoY, resY);
+  });
+  resolucaoTotalY = maiorResolucaoY;
+  
+  // Atualizar interface
+  document.getElementById("totPaineis").textContent = total.paineis;
+  document.getElementById("totModulos").textContent = total.modulos;
+  document.getElementById("totResolucao").textContent = `${resolucaoTotalX}x${resolucaoTotalY}`;
+  document.getElementById("totArea").innerHTML = 
+    `${total.area.toFixed(2)}<span class="totalizador-unidade">m²</span>`;
+  document.getElementById("totMedio").innerHTML = 
+    `${total.medio.toFixed(0)}<span class="totalizador-unidade">W</span>`;
+  document.getElementById("totMax").innerHTML = 
+    `${total.max.toFixed(0)}<span class="totalizador-unidade">W</span>`;
+  
+  console.log("Totalizador atualizado:", {
+    ...total,
+    resolucaoX: resolucaoTotalX,
+    resolucaoY: resolucaoTotalY,
+    linhas: linhas.length,
+    colunas: colunas.length
+  });
 }
 
-/* =========================
-   DESENHO DO PREVIEW
-========================= */
-function redraw(){
-  if(!estado.painel) return;
-  desenharPreview(estado.pl,estado.pa,estado.painel);
-}
-
-function desenharPreview(pl,pa,p){
-  const c=preview,ctx=c.getContext("2d");
-  const {w:maxW,h:maxH}=obterBoundsPreview();
-
-  const ratio=(pa*p.alturaMM)/(pl*p.larguraMM);
-  let w=maxW,h=w*ratio;
-  if(h>maxH){h=maxH;w=h/ratio;}
-
-  /* Retina */
-  c.width=w*2; c.height=h*2;
-  c.style.width=w+"px";
-  c.style.height=h+"px";
-  ctx.setTransform(2,0,0,2,0,0);
-  ctx.clearRect(0,0,w,h);
-
-  /* Fundo */
-  if(estado.layout==="test"){
-    if(imgTestPattern.complete)
-      ctx.drawImage(imgTestPattern,0,0,w,h);
-  }else{
-    ctx.fillStyle=estado.cor;
-    ctx.fillRect(0,0,w,h);
-  }
-
-  /* Logo */
-  if(estado.logo){
-    const i=new Image();
-    i.onload=()=>{
-      const s=Math.min(w,h)*0.35/Math.max(i.width,i.height);
-      ctx.drawImage(i,(w-i.width*s)/2,(h-i.height*s)/2,i.width*s,i.height*s);
+/* =====================================================
+   RENDERIZAÇÃO DO CANVAS
+===================================================== */
+function renderizarCanvas() {
+  const container = document.getElementById("previewContainer");
+  
+  // Limpar canvas anteriores
+  const canvasAntigos = container.querySelectorAll(".painel-canvas");
+  canvasAntigos.forEach(c => c.remove());
+  
+  if (estado.paineis.length === 0) return;
+  
+  estado.paineis.forEach(painel => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "painel-canvas";
+    if (estado.painelSelecionado?.id === painel.id) {
+      wrapper.classList.add("selecionado");
+    }
+    
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    
+    // Dimensões do canvas usando escala dinâmica
+    const w = painel.largura * estado.escala;
+    const h = painel.altura * estado.escala;
+    
+    canvas.width = w * 2;
+    canvas.height = h * 2;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    
+    // Desenhar fundo
+    if (estado.layout === "test") {
+      if (imgTestPattern.complete && imgTestPattern.naturalWidth > 0) {
+        // Usar imagem se carregou
+        ctx.drawImage(imgTestPattern, 0, 0, w, h);
+      } else {
+        // Usar pattern dinâmico
+        criarTestPattern(ctx, w, h);
+      }
+    } else {
+      ctx.fillStyle = estado.cor;
+      ctx.fillRect(0, 0, w, h);
+    }
+    
+    // Logo
+    if (estado.logoImg && estado.logoImg.complete) {
+      const i = estado.logoImg;
+      const s = Math.min(w, h) * 0.35 / Math.max(i.width, i.height);
+      ctx.drawImage(i, (w - i.width * s) / 2, (h - i.height * s) / 2, i.width * s, i.height * s);
+    }
+    
+    // Grid
+    if (estado.grid) {
+      ctx.strokeStyle = "rgba(255,255,255,.15)";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < painel.pl; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * w / painel.pl, 0);
+        ctx.lineTo(i * w / painel.pl, h);
+        ctx.stroke();
+      }
+      for (let j = 1; j < painel.pa; j++) {
+        ctx.beginPath();
+        ctx.moveTo(0, j * h / painel.pa);
+        ctx.lineTo(w, j * h / painel.pa);
+        ctx.stroke();
+      }
+    }
+    
+    // Label
+    const label = document.createElement("div");
+    label.className = "painel-label";
+    label.textContent = painel.nome;
+    
+    wrapper.appendChild(label);
+    wrapper.appendChild(canvas);
+    
+    // Posicionar usando escala dinâmica
+    const xPixels = painel.xMetros * estado.escala;
+    const yPixels = painel.yMetros * estado.escala;
+    wrapper.style.left = xPixels + "px";
+    wrapper.style.top = yPixels + "px";
+    
+    // Arrastar
+    wrapper.onmousedown = (e) => {
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const inicialXMetros = painel.xMetros;
+      const inicialYMetros = painel.yMetros;
+      
+      selecionarPainel(painel.id);
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const onMouseMove = (moveEvent) => {
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+        // Converter pixels de volta para metros e atualizar imediatamente
+        painel.xMetros = inicialXMetros + (deltaX / estado.escala);
+        painel.yMetros = inicialYMetros + (deltaY / estado.escala);
+        // Atualizar posição diretamente (sem transform)
+        wrapper.style.left = (painel.xMetros * estado.escala) + "px";
+        wrapper.style.top = (painel.yMetros * estado.escala) + "px";
+      };
+      
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        // Recalcular totalizador ao soltar (layout pode ter mudado)
+        atualizarTotalizador();
+      };
+      
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
     };
-    i.src=estado.logo;
-  }
-
-  /* Grid */
-  if(estado.grid){
-    ctx.strokeStyle="rgba(255,255,255,.4)";
-    for(let i=1;i<pl;i++){
-      ctx.beginPath();
-      ctx.moveTo(i*w/pl,0);
-      ctx.lineTo(i*w/pl,h);
-      ctx.stroke();
-    }
-    for(let j=1;j<pa;j++){
-      ctx.beginPath();
-      ctx.moveTo(0,j*h/pa);
-      ctx.lineTo(w,j*h/pa);
-      ctx.stroke();
-    }
-  }
-
-  /* Numeração */
-  if(estado.numeros){
-    ctx.fillStyle="#fff";
-    ctx.font="12px Arial";
-    ctx.textAlign="center";
-    for(let i=0;i<pl;i++)
-      ctx.fillText(i+1,(i+.5)*w/pl,14);
-    for(let j=0;j<pa;j++)
-      ctx.fillText(j+1,14,(j+.5)*h/pa);
-  }
+    
+    container.appendChild(wrapper);
+  });
 }
 
-/* =========================
+/* =====================================================
+   ORGANIZAÇÃO AUTOMÁTICA E ZOOM
+===================================================== */
+function calcularEscalaOtima() {
+  if (estado.paineis.length === 0) return estado.escalaBase;
+  
+  const container = document.getElementById("previewContainer");
+  const containerWidth = container.offsetWidth - 40; // Margens
+  const containerHeight = container.offsetHeight - 100; // Espaço para botões e margens
+  
+  // Organizar painéis em linha para calcular espaço necessário
+  let larguraTotal = 0;
+  let alturaMaxima = 0;
+  const espacamento = 0.2; // 20cm entre painéis
+  
+  estado.paineis.forEach((painel, i) => {
+    larguraTotal += painel.largura;
+    if (i < estado.paineis.length - 1) {
+      larguraTotal += espacamento;
+    }
+    alturaMaxima = Math.max(alturaMaxima, painel.altura);
+  });
+  
+  // Calcular escala para caber na largura e altura
+  const escalaLargura = containerWidth / larguraTotal;
+  const escalaAltura = containerHeight / alturaMaxima;
+  
+  // Usar a menor escala para garantir que tudo cabe
+  const escalaCalculada = Math.min(escalaLargura, escalaAltura);
+  
+  // Garantir escala mínima de 20 e máxima de 200
+  return Math.max(20, Math.min(200, escalaCalculada));
+}
+
+function autoOrganizar() {
+  if (estado.paineis.length === 0) return;
+  
+  // Calcular escala ótima
+  estado.escala = calcularEscalaOtima();
+  
+  // Posicionar painéis em linha horizontal
+  let xAtual = 0.2; // Margem inicial em metros
+  const yInicial = 0.6; // Posição Y fixa em metros
+  const espacamento = 0.2; // 20cm entre painéis
+  
+  estado.paineis.forEach(painel => {
+    painel.xMetros = xAtual;
+    painel.yMetros = yInicial;
+    xAtual += painel.largura + espacamento;
+  });
+  
+  renderizarCanvas();
+  console.log(`Painéis reorganizados com escala: ${estado.escala.toFixed(1)} px/m`);
+}
+
+function ajustarZoom() {
+  if (estado.paineis.length === 0) return;
+  
+  // Recalcular escala e centralizar
+  estado.escala = calcularEscalaOtima();
+  
+  const container = document.getElementById("previewContainer");
+  const containerWidth = container.offsetWidth;
+  const containerHeight = container.offsetHeight;
+  
+  // Encontrar bounds em metros
+  let minX = Infinity, minY = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
+  
+  estado.paineis.forEach(p => {
+    minX = Math.min(minX, p.xMetros);
+    minY = Math.min(minY, p.yMetros);
+    maxX = Math.max(maxX, p.xMetros + p.largura);
+    maxY = Math.max(maxY, p.yMetros + p.altura);
+  });
+  
+  const totalWidthMetros = maxX - minX;
+  const totalHeightMetros = maxY - minY;
+  
+  // Calcular offset para centralizar (em metros)
+  const offsetXMetros = ((containerWidth / estado.escala) - totalWidthMetros) / 2;
+  const offsetYMetros = ((containerHeight / estado.escala) - totalHeightMetros) / 2;
+  
+  // Aplicar offset
+  estado.paineis.forEach(p => {
+    p.xMetros = p.xMetros - minX + offsetXMetros;
+    p.yMetros = p.yMetros - minY + offsetYMetros;
+  });
+  
+  renderizarCanvas();
+  console.log(`Zoom ajustado - Escala: ${estado.escala.toFixed(1)} px/m`);
+}
+
+/* =====================================================
    EXPORTAÇÃO
-========================= */
-function exportar(limpo){
-  const g=estado.grid,n=estado.numeros;
-  if(limpo){estado.grid=false;estado.numeros=false;}
-  redraw();
-  setTimeout(()=>{
-    const a=document.createElement("a");
-    a.download="painel-led.png";
-    a.href=preview.toDataURL("image/png");
-    a.click();
-    estado.grid=g;estado.numeros=n;
-    redraw();
-  },50);
+===================================================== */
+function exportarImagem(limpo) {
+  if (estado.paineis.length === 0) {
+    alert("Adicione pelo menos um painel antes de exportar!");
+    return;
+  }
+  
+  // Salvar estado do grid
+  const gridOriginal = estado.grid;
+  if (limpo) estado.grid = false;
+  
+  // Re-renderizar sem grid se necessário
+  if (limpo) renderizarCanvas();
+  
+  setTimeout(() => {
+    // Criar canvas temporário com todos os painéis
+    const tempCanvas = document.createElement("canvas");
+    const ctx = tempCanvas.getContext("2d");
+    
+    // Encontrar bounds em metros
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    estado.paineis.forEach(p => {
+      minX = Math.min(minX, p.xMetros);
+      minY = Math.min(minY, p.yMetros);
+      maxX = Math.max(maxX, p.xMetros + p.largura);
+      maxY = Math.max(maxY, p.yMetros + p.altura);
+    });
+    
+    // Usar escala alta para exportação (200 px/m para qualidade)
+    const escalaExport = 200;
+    const margem = 50;
+    const width = (maxX - minX) * escalaExport + (margem * 2);
+    const height = (maxY - minY) * escalaExport + (margem * 2);
+    
+    tempCanvas.width = width;
+    tempCanvas.height = height;
+    
+    // Fundo branco
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+    
+    // Desenhar cada painel
+    const canvasElements = document.querySelectorAll(".painel-canvas canvas");
+    
+    estado.paineis.forEach((painel, index) => {
+      const x = (painel.xMetros - minX) * escalaExport + margem;
+      const y = (painel.yMetros - minY) * escalaExport + margem;
+      const w = painel.largura * escalaExport;
+      const h = painel.altura * escalaExport;
+      
+      // Pegar o canvas correspondente
+      if (canvasElements[index]) {
+        ctx.drawImage(canvasElements[index], x, y, w, h);
+      }
+      
+      // Label se não for limpo
+      if (!limpo) {
+        const labelHeight = 20;
+        ctx.fillStyle = "rgba(79,195,247,0.9)";
+        ctx.fillRect(x, y - labelHeight, Math.min(w, 200), labelHeight - 2);
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 14px Inter, Arial, sans-serif";
+        ctx.fillText(painel.nome, x + 8, y - 6);
+      }
+    });
+    
+    // Download
+    try {
+      const a = document.createElement("a");
+      a.download = `projeto-led-${Date.now()}.png`;
+      a.href = tempCanvas.toDataURL("image/png");
+      a.click();
+      console.log("Exportação concluída com sucesso!");
+    } catch (error) {
+      console.error("Erro na exportação:", error);
+      alert("Erro ao exportar imagem. Tente novamente.");
+    }
+    
+    // Restaurar grid
+    if (limpo) {
+      estado.grid = gridOriginal;
+      renderizarCanvas();
+    }
+  }, 100);
 }
 
-exportTech.onclick=()=>exportar(false);
-exportCliente.onclick=()=>exportar(true);
+function exportarRelatorio() {
+  alert("Exportação de relatório PDF será implementada em breve!\n\nPor enquanto, use Print (Ctrl+P) para salvar como PDF.");
+}
 
-/* =========================
+/* =====================================================
+   EVENTOS
+===================================================== */
+layout.onchange = e => {
+  estado.layout = e.target.value;
+  renderizarCanvas();
+};
+
+grid.onchange = e => {
+  estado.grid = e.target.checked;
+  renderizarCanvas();
+};
+
+cor.oninput = e => {
+  estado.cor = e.target.value;
+  renderizarCanvas();
+};
+
+logo.onchange = e => {
+  const r = new FileReader();
+  r.onload = () => {
+    estado.logoImg = new Image();
+    estado.logoImg.onload = () => renderizarCanvas();
+    estado.logoImg.src = r.result;
+  };
+  if (e.target.files[0]) {
+    r.readAsDataURL(e.target.files[0]);
+  }
+};
+
+btnNovo.onclick = () => {
+  boxNovo.style.display = boxNovo.style.display === "block" ? "none" : "block";
+};
+
+salvarModelo.onclick = () => {
+  if (!npNome.value) {
+    alert("Digite um nome para o modelo!");
+    return;
+  }
+  
+  modelos[npNome.value] = {
+    larguraMM: +npL.value,
+    alturaMM: +npA.value,
+    pxL: +npPxL.value,
+    pxA: +npPxA.value,
+    medio: +npMed.value,
+    max: +npMax.value
+  };
+  
+  salvarModelos();
+  atualizarModelosSelect();
+  modelo.value = npNome.value;
+  boxNovo.style.display = "none";
+  
+  // Limpar campos
+  npNome.value = "";
+  npL.value = "";
+  npA.value = "";
+  npPxL.value = "";
+  npPxA.value = "";
+  npMed.value = "";
+  npMax.value = "";
+};
+
+btnExcluir.onclick = () => {
+  const nome = modelo.value;
+  if (!nome) return;
+  
+  if (confirm(`Excluir o modelo "${nome}"?`)) {
+    delete modelos[nome];
+    salvarModelos();
+    atualizarModelosSelect();
+  }
+};
+
+adicionarPainel.onclick = adicionarPainelAoProjeto;
+limparTodos.onclick = limparTodosPaineis;
+btnReorganizar.onclick = autoOrganizar;
+btnZoomFit.onclick = ajustarZoom;
+
+exportTech.onclick = () => exportarImagem(false);
+exportCliente.onclick = () => exportarImagem(true);
+exportRelatorio.onclick = exportarRelatorio;
+
+/* =====================================================
    INIT
-========================= */
-ano.innerText=new Date().getFullYear();
+===================================================== */
+ano.textContent = new Date().getFullYear();
+atualizarTotalizador();
+renderizarCanvas();
 </script>
 
 </body>
