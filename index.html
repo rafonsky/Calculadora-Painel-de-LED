@@ -71,6 +71,17 @@ h1{
   border-radius:12px;
   overflow:hidden;
   padding:10px;
+  background-image:
+    linear-gradient(rgba(79,195,247,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,195,247,0.08) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: 0 0;
+  will-change:auto;
+  transform:translateZ(0);
+}
+
+.preview-container.sem-grid{
+  background-image:none;
 }
 
 .totalizador{
@@ -303,6 +314,15 @@ canvas{
   transition:border-color 0.2s;
   pointer-events:auto;
   z-index:1;
+  will-change:transform;
+  transform:translate3d(0,0,0);
+  backface-visibility:hidden;
+  -webkit-font-smoothing:subpixel-antialiased;
+}
+
+.painel-canvas.arrastando{
+  transition:none;
+  z-index:100;
 }
 
 .painel-canvas.selecionado{
@@ -336,26 +356,82 @@ canvas{
 
 .controles-canvas{
   position:absolute;
-  top:10px;
+  bottom:10px;
   right:10px;
   display:flex;
-  gap:8px;
+  flex-direction:column;
+  gap:4px;
+  background:rgba(27,30,35,0.95);
+  padding:6px;
+  border-radius:8px;
+  border:1px solid #333;
 }
 
 .btn-canvas{
   background:rgba(37,41,50,0.95);
   border:1px solid #555;
   color:#fff;
-  padding:8px 12px;
-  border-radius:6px;
+  padding:4px 8px;
+  border-radius:4px;
   cursor:pointer;
-  font-size:12px;
+  font-size:10px;
   font-weight:600;
+  white-space:nowrap;
+  min-width:70px;
+  text-align:center;
 }
 
 .btn-canvas:hover{
   background:#2196f3;
   border-color:#2196f3;
+}
+
+.btn-canvas:disabled{
+  opacity:0.3;
+  cursor:not-allowed;
+  background:rgba(37,41,50,0.95);
+}
+
+.separador-botoes{
+  height:1px;
+  background:#333;
+  margin:2px 0;
+}
+
+.zoom-indicator{
+  position:absolute;
+  bottom:10px;
+  left:10px;
+  background:rgba(27,30,35,0.95);
+  padding:4px 8px;
+  border-radius:8px;
+  border:1px solid #333;
+  font-size:10px;
+  color:#4fc3f7;
+  font-weight:600;
+  pointer-events:none;
+}
+
+/* Linhas guia de alinhamento */
+.guia-alinhamento{
+  position:absolute;
+  background:#4fc3f7;
+  pointer-events:none;
+  z-index:999;
+}
+
+.guia-vertical{
+  width:2px;
+  height:100%;
+  top:0;
+  box-shadow:0 0 10px rgba(79,195,247,0.8);
+}
+
+.guia-horizontal{
+  height:2px;
+  width:100%;
+  left:0;
+  box-shadow:0 0 10px rgba(79,195,247,0.8);
 }
 
 /* =========================
@@ -485,7 +561,14 @@ footer{
       <option value="clean">Clean</option>
     </select>
 
-    <label><input type="checkbox" id="grid" checked> Mostrar grid</label>
+    <label><input type="checkbox" id="grid" checked> Mostrar grid nos painéis</label>
+    
+    <label><input type="checkbox" id="gridFundo" checked> Mostrar grid de fundo (0.5m)</label>
+    
+    <label><input type="checkbox" id="snapEnabled" checked> Snap (alinhamento automático)</label>
+    
+    <label>Distância de snap (cm)</label>
+    <input type="number" id="snapDistance" value="10" min="1" max="50" step="1">
 
     <label>Cor de fundo</label>
     <input type="color" id="cor" value="#ffffff">
@@ -511,9 +594,16 @@ footer{
   
   <!-- PREVIEW COM COMPOSIÇÃO LIVRE -->
   <div class="preview-container" id="previewContainer">
+    <div class="zoom-indicator" id="zoomIndicator">100%</div>
     <div class="controles-canvas">
-      <button class="btn-canvas" id="btnReorganizar">🔄 Auto-organizar</button>
-      <button class="btn-canvas" id="btnZoomFit">🔍 Ajustar zoom</button>
+      <button class="btn-canvas" id="btnZoomIn">➕</button>
+      <button class="btn-canvas" id="btnZoomOut">➖</button>
+      <button class="btn-canvas" id="btnZoomFit">⊡ Fit</button>
+      <div class="separador-botoes"></div>
+      <button class="btn-canvas" id="btnReorganizar">⚡ Auto</button>
+      <div class="separador-botoes"></div>
+      <button class="btn-canvas" id="btnUndo">↶</button>
+      <button class="btn-canvas" id="btnRedo">↷</button>
     </div>
   </div>
 
@@ -568,8 +658,229 @@ const estado = {
   cor: "#ffffff",
   logoImg: null,
   escala: 100,       // Escala dinâmica (pixels por metro)
-  escalaBase: 100    // Escala base para cálculos
+  escalaBase: 100,   // Escala base para cálculos
+  snapEnabled: true, // Snap ativado
+  snapDistance: 0.1, // Distância de snap em metros (10cm padrão)
+  historyIndex: -1,
+  history: [],       // Histórico de estados para undo/redo
+  isDragging: false  // Flag para otimizar rendering durante arrastar
 };
+
+/* =====================================================
+   HISTÓRICO (UNDO/REDO)
+===================================================== */
+function salvarEstadoHistorico() {
+  // Remover estados futuros se estamos no meio do histórico
+  if (estado.historyIndex < estado.history.length - 1) {
+    estado.history = estado.history.slice(0, estado.historyIndex + 1);
+  }
+  
+  // Clonar estado dos painéis
+  const snapshot = estado.paineis.map(p => ({
+    id: p.id,
+    nome: p.nome,
+    xMetros: p.xMetros,
+    yMetros: p.yMetros,
+    largura: p.largura,
+    altura: p.altura,
+    modeloNome: p.modeloNome
+  }));
+  
+  estado.history.push(snapshot);
+  estado.historyIndex++;
+  
+  // Limitar histórico a 50 estados
+  if (estado.history.length > 50) {
+    estado.history.shift();
+    estado.historyIndex--;
+  }
+  
+  atualizarBotoesHistorico();
+}
+
+function undo() {
+  if (estado.historyIndex > 0) {
+    estado.historyIndex--;
+    restaurarEstado(estado.history[estado.historyIndex]);
+  }
+}
+
+function redo() {
+  if (estado.historyIndex < estado.history.length - 1) {
+    estado.historyIndex++;
+    restaurarEstado(estado.history[estado.historyIndex]);
+  }
+}
+
+function restaurarEstado(snapshot) {
+  // Reconstruir painéis do snapshot
+  estado.paineis = snapshot.map(s => {
+    const painel = new Painel(s.nome, s.largura, s.altura, s.modeloNome);
+    painel.id = s.id;
+    painel.xMetros = s.xMetros;
+    painel.yMetros = s.yMetros;
+    return painel;
+  });
+  
+  atualizarListaPaineis();
+  atualizarTotalizador();
+  renderizarCanvas();
+  atualizarBotoesHistorico();
+}
+
+function atualizarBotoesHistorico() {
+  const btnUndo = document.getElementById("btnUndo");
+  const btnRedo = document.getElementById("btnRedo");
+  
+  if (btnUndo) btnUndo.disabled = estado.historyIndex <= 0;
+  if (btnRedo) btnRedo.disabled = estado.historyIndex >= estado.history.length - 1;
+}
+
+/* =====================================================
+   SNAP E GUIAS DE ALINHAMENTO
+===================================================== */
+function aplicarSnap(painelAtual) {
+  if (!estado.snapEnabled) return;
+  
+  const snapDist = estado.snapDistance; // em metros
+  const guias = { vertical: [], horizontal: [] };
+  
+  // Verificar alinhamento com outros painéis
+  estado.paineis.forEach(p => {
+    if (p.id === painelAtual.id) return;
+    
+    // Bordas do painel de referência
+    const refLeft = p.xMetros;
+    const refRight = p.xMetros + p.largura;
+    const refTop = p.yMetros;
+    const refBottom = p.yMetros + p.altura;
+    
+    // Bordas do painel sendo movido
+    const currLeft = painelAtual.xMetros;
+    const currRight = painelAtual.xMetros + painelAtual.largura;
+    const currTop = painelAtual.yMetros;
+    const currBottom = painelAtual.yMetros + painelAtual.altura;
+    
+    // SNAP VERTICAL (alinhamento em X)
+    // Alinha esquerda com esquerda
+    if (Math.abs(currLeft - refLeft) < snapDist) {
+      painelAtual.xMetros = refLeft;
+      guias.vertical.push(refLeft);
+    }
+    // Alinha esquerda com direita
+    else if (Math.abs(currLeft - refRight) < snapDist) {
+      painelAtual.xMetros = refRight;
+      guias.vertical.push(refRight);
+    }
+    // Alinha direita com esquerda
+    else if (Math.abs(currRight - refLeft) < snapDist) {
+      painelAtual.xMetros = refLeft - painelAtual.largura;
+      guias.vertical.push(refLeft);
+    }
+    // Alinha direita com direita
+    else if (Math.abs(currRight - refRight) < snapDist) {
+      painelAtual.xMetros = refRight - painelAtual.largura;
+      guias.vertical.push(refRight);
+    }
+    
+    // SNAP HORIZONTAL (alinhamento em Y)
+    // Alinha topo com topo
+    if (Math.abs(currTop - refTop) < snapDist) {
+      painelAtual.yMetros = refTop;
+      guias.horizontal.push(refTop);
+    }
+    // Alinha topo com base
+    else if (Math.abs(currTop - refBottom) < snapDist) {
+      painelAtual.yMetros = refBottom;
+      guias.horizontal.push(refBottom);
+    }
+    // Alinha base com topo
+    else if (Math.abs(currBottom - refTop) < snapDist) {
+      painelAtual.yMetros = refTop - painelAtual.altura;
+      guias.horizontal.push(refTop);
+    }
+    // Alinha base com base
+    else if (Math.abs(currBottom - refBottom) < snapDist) {
+      painelAtual.yMetros = refBottom - painelAtual.altura;
+      guias.horizontal.push(refBottom);
+    }
+  });
+  
+  return guias;
+}
+
+function mostrarGuias(guias) {
+  limparGuias();
+  
+  if (!guias) return;
+  
+  const container = document.getElementById("previewContainer");
+  
+  // Guias verticais
+  guias.vertical.forEach(x => {
+    const guia = document.createElement("div");
+    guia.className = "guia-alinhamento guia-vertical";
+    guia.style.left = (x * estado.escala) + "px";
+    container.appendChild(guia);
+  });
+  
+  // Guias horizontais
+  guias.horizontal.forEach(y => {
+    const guia = document.createElement("div");
+    guia.className = "guia-alinhamento guia-horizontal";
+    guia.style.top = (y * estado.escala) + "px";
+    container.appendChild(guia);
+  });
+}
+
+function limparGuias() {
+  const guias = document.querySelectorAll(".guia-alinhamento");
+  guias.forEach(g => g.remove());
+}
+
+/* =====================================================
+   ZOOM MANUAL
+===================================================== */
+function zoomIn() {
+  estado.escala = Math.min(estado.escala * 1.2, 300); // Max 300 px/m
+  atualizarGridFundo();
+  atualizarIndicadorZoom();
+  renderizarCanvas();
+  console.log(`Zoom In: ${estado.escala.toFixed(1)} px/m | Grid: ${(estado.escala * 0.5).toFixed(1)}px`);
+}
+
+function zoomOut() {
+  estado.escala = Math.max(estado.escala / 1.2, 20); // Min 20 px/m
+  atualizarGridFundo();
+  atualizarIndicadorZoom();
+  renderizarCanvas();
+  console.log(`Zoom Out: ${estado.escala.toFixed(1)} px/m | Grid: ${(estado.escala * 0.5).toFixed(1)}px`);
+}
+
+function aplicarZoomScroll(e) {
+  e.preventDefault();
+  
+  if (e.deltaY < 0) {
+    zoomIn();
+  } else {
+    zoomOut();
+  }
+}
+
+function atualizarGridFundo() {
+  const container = document.getElementById("previewContainer");
+  // Grid sempre 0.5m (50cm) - escala junto com os painéis
+  const gridSize = estado.escala * 0.5; // 0.5m = 50cm
+  container.style.backgroundSize = `${gridSize}px ${gridSize}px`;
+}
+
+function atualizarIndicadorZoom() {
+  const indicator = document.getElementById("zoomIndicator");
+  if (indicator) {
+    const percentual = Math.round((estado.escala / estado.escalaBase) * 100);
+    indicator.textContent = `${percentual}%`;
+  }
+}
 
 /* =====================================================
    IMAGEM DE TEST PATTERN
@@ -698,6 +1009,9 @@ function adicionarPainelAoProjeto() {
   
   // Auto-organizar e ajustar zoom automaticamente
   autoOrganizar();
+  
+  // Salvar no histórico
+  salvarEstadoHistorico();
   
   console.log("Painel adicionado:", painel);
   console.log("Total de painéis:", estado.paineis.length);
@@ -917,7 +1231,10 @@ function renderizarCanvas() {
     }
     
     const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { 
+      alpha: false,
+      desynchronized: true // Melhora performance
+    });
     
     // Dimensões do canvas usando escala dinâmica
     const w = painel.largura * estado.escala;
@@ -933,10 +1250,8 @@ function renderizarCanvas() {
     // Desenhar fundo
     if (estado.layout === "test") {
       if (imgTestPattern.complete && imgTestPattern.naturalWidth > 0) {
-        // Usar imagem se carregou
         ctx.drawImage(imgTestPattern, 0, 0, w, h);
       } else {
-        // Usar pattern dinâmico
         criarTestPattern(ctx, w, h);
       }
     } else {
@@ -977,19 +1292,21 @@ function renderizarCanvas() {
     wrapper.appendChild(label);
     wrapper.appendChild(canvas);
     
-    // Posicionar usando escala dinâmica
+    // Posicionar usando transform para performance
     const xPixels = painel.xMetros * estado.escala;
     const yPixels = painel.yMetros * estado.escala;
-    wrapper.style.left = xPixels + "px";
-    wrapper.style.top = yPixels + "px";
+    wrapper.style.left = "0";
+    wrapper.style.top = "0";
+    wrapper.style.transform = `translate3d(${xPixels}px, ${yPixels}px, 0)`;
     
-    // Arrastar
+    // Arrastar com transform para máxima fluidez
     wrapper.onmousedown = (e) => {
       const startX = e.clientX;
       const startY = e.clientY;
       const inicialXMetros = painel.xMetros;
       const inicialYMetros = painel.yMetros;
       
+      wrapper.classList.add("arrastando");
       selecionarPainel(painel.id);
       e.preventDefault();
       e.stopPropagation();
@@ -997,22 +1314,40 @@ function renderizarCanvas() {
       const onMouseMove = (moveEvent) => {
         const deltaX = moveEvent.clientX - startX;
         const deltaY = moveEvent.clientY - startY;
-        // Converter pixels de volta para metros e atualizar imediatamente
+        
+        // Atualizar posição em metros
         painel.xMetros = inicialXMetros + (deltaX / estado.escala);
         painel.yMetros = inicialYMetros + (deltaY / estado.escala);
-        // Atualizar posição diretamente (sem transform)
-        wrapper.style.left = (painel.xMetros * estado.escala) + "px";
-        wrapper.style.top = (painel.yMetros * estado.escala) + "px";
+        
+        // Usar transform direto para fluidez máxima
+        const xPx = painel.xMetros * estado.escala;
+        const yPx = painel.yMetros * estado.escala;
+        wrapper.style.transform = `translate3d(${xPx}px, ${yPx}px, 0)`;
       };
       
       const onMouseUp = () => {
+        wrapper.classList.remove("arrastando");
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
-        // Recalcular totalizador ao soltar (layout pode ter mudado)
+        
+        // Aplicar snap APENAS ao soltar
+        const guias = aplicarSnap(painel);
+        const xPx = painel.xMetros * estado.escala;
+        const yPx = painel.yMetros * estado.escala;
+        wrapper.style.transform = `translate3d(${xPx}px, ${yPx}px, 0)`;
+        
+        // Mostrar guias brevemente
+        if (guias && (guias.vertical.length > 0 || guias.horizontal.length > 0)) {
+          mostrarGuias(guias);
+          setTimeout(limparGuias, 500);
+        }
+        
+        // Recalcular totalizador e salvar histórico
         atualizarTotalizador();
+        salvarEstadoHistorico();
       };
       
-      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mousemove', onMouseMove, { passive: true });
       document.addEventListener('mouseup', onMouseUp);
     };
     
@@ -1027,13 +1362,14 @@ function calcularEscalaOtima() {
   if (estado.paineis.length === 0) return estado.escalaBase;
   
   const container = document.getElementById("previewContainer");
-  const containerWidth = container.offsetWidth - 40; // Margens
+  const containerWidth = container.offsetWidth - 80; // Margens laterais
   const containerHeight = container.offsetHeight - 100; // Espaço para botões e margens
   
   // Organizar painéis em linha para calcular espaço necessário
   let larguraTotal = 0;
   let alturaMaxima = 0;
   const espacamento = 0.2; // 20cm entre painéis
+  const margemInicial = 0.3; // 30cm de margem
   
   estado.paineis.forEach((painel, i) => {
     larguraTotal += painel.largura;
@@ -1042,6 +1378,10 @@ function calcularEscalaOtima() {
     }
     alturaMaxima = Math.max(alturaMaxima, painel.altura);
   });
+  
+  // Adicionar margens
+  larguraTotal += margemInicial * 2;
+  alturaMaxima += margemInicial * 2;
   
   // Calcular escala para caber na largura e altura
   const escalaLargura = containerWidth / larguraTotal;
@@ -1059,10 +1399,12 @@ function autoOrganizar() {
   
   // Calcular escala ótima
   estado.escala = calcularEscalaOtima();
+  atualizarGridFundo();
+  atualizarIndicadorZoom();
   
-  // Posicionar painéis em linha horizontal
-  let xAtual = 0.2; // Margem inicial em metros
-  const yInicial = 0.6; // Posição Y fixa em metros
+  // Posicionar painéis em linha horizontal com margem adequada
+  let xAtual = 0.3; // Margem inicial em metros (30cm)
+  const yInicial = 0.3; // Posição Y em metros (30cm do topo)
   const espacamento = 0.2; // 20cm entre painéis
   
   estado.paineis.forEach(painel => {
@@ -1080,6 +1422,8 @@ function ajustarZoom() {
   
   // Recalcular escala e centralizar
   estado.escala = calcularEscalaOtima();
+  atualizarGridFundo();
+  atualizarIndicadorZoom();
   
   const container = document.getElementById("previewContainer");
   const containerWidth = container.offsetWidth;
@@ -1286,6 +1630,57 @@ limparTodos.onclick = limparTodosPaineis;
 btnReorganizar.onclick = autoOrganizar;
 btnZoomFit.onclick = ajustarZoom;
 
+// Zoom manual
+btnZoomIn.onclick = zoomIn;
+btnZoomOut.onclick = zoomOut;
+
+// Histórico
+btnUndo.onclick = undo;
+btnRedo.onclick = redo;
+
+// Atalhos de teclado
+document.addEventListener('keydown', (e) => {
+  // Ctrl+Z ou Cmd+Z para Undo
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    undo();
+  }
+  // Ctrl+Shift+Z ou Cmd+Shift+Z para Redo
+  else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+    e.preventDefault();
+    redo();
+  }
+  // Ctrl+Y ou Cmd+Y para Redo (alternativo)
+  else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+    e.preventDefault();
+    redo();
+  }
+});
+
+// Zoom com scroll do mouse
+const previewContainer = document.getElementById("previewContainer");
+previewContainer.addEventListener('wheel', aplicarZoomScroll, { passive: false });
+
+// Snap settings
+snapEnabled.onchange = (e) => {
+  estado.snapEnabled = e.target.checked;
+};
+
+snapDistance.oninput = (e) => {
+  estado.snapDistance = (+e.target.value) / 100; // Converter cm para metros
+  console.log(`Distância de snap: ${e.target.value}cm`);
+};
+
+// Grid de fundo
+gridFundo.onchange = (e) => {
+  const container = document.getElementById("previewContainer");
+  if (e.target.checked) {
+    container.classList.remove('sem-grid');
+  } else {
+    container.classList.add('sem-grid');
+  }
+};
+
 exportTech.onclick = () => exportarImagem(false);
 exportCliente.onclick = () => exportarImagem(true);
 exportRelatorio.onclick = exportarRelatorio;
@@ -1295,6 +1690,7 @@ exportRelatorio.onclick = exportarRelatorio;
 ===================================================== */
 ano.textContent = new Date().getFullYear();
 atualizarTotalizador();
+atualizarBotoesHistorico();
 renderizarCanvas();
 </script>
 
