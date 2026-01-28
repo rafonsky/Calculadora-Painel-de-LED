@@ -3,249 +3,349 @@
 <head>
 <meta charset="UTF-8">
 <title>Calculadora de Painel de LED</title>
+
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #222;
-  color: #fff;
-  margin: 0;
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#222;
+  color:#fff;
 }
-h1, h2 { text-align: center; margin: 10px 0; }
-.container { display: flex; gap: 20px; padding: 20px; }
-.left { width: 420px; background: #333; padding: 15px; border-radius: 8px; }
-label { display: block; margin-top: 10px; font-weight: bold; }
-input, select, button { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; border: none; }
-button { margin-top: 12px; font-weight: bold; cursor: pointer; }
-#calcular { background: #28a745; color: #fff; }
-#toggleCadastro { background: #ff9800; color: #fff; }
-#removerPainel { background: #d32f2f; color: #fff; }
-table { width: 100%; margin-top: 15px; border-collapse: collapse; background: #444; }
-th, td { border: 1px solid #666; padding: 8px; text-align: center; }
-th { background: #555; }
-.right { flex: 1; display: flex; justify-content: center; align-items: center; }
-canvas { border: 1px solid #555; border-radius: 8px; max-width: 100%; }
-footer { text-align: center; padding: 10px; font-size: 13px; color: #aaa; background: #111; }
+
+h1{text-align:center;margin:10px 0;}
+
+.container{
+  display:flex;
+  gap:20px;
+  padding:20px;
+}
+
+.left{
+  width:360px;
+  background:#333;
+  padding:15px;
+  border-radius:8px;
+  overflow-y:auto;
+}
+
+.right{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:calc(100vh - 120px); /* IMPORTANTE: trava crescimento */
+}
+
+label{display:block;margin-top:10px;font-weight:bold;}
+
+input,select,button{
+  width:100%;
+  padding:8px;
+  margin-top:4px;
+  border-radius:6px;
+  border:none;
+}
+
+input,select{background:#444;color:#fff;}
+
+button{font-weight:bold;cursor:pointer;}
+
+canvas{
+  border:1px solid #555;
+  border-radius:8px;
+}
+
+.btn-green{background:#28a745;}
+.btn-blue{background:#2196f3;}
+.btn-red{background:#e53935;}
+.btn-orange{background:#ff9800;margin-top:6px;}
+.btn-cyan{background:#03a9f4;margin-top:6px;}
+
+footer{
+  text-align:center;
+  font-size:13px;
+  color:#aaa;
+  padding:10px;
+}
 </style>
 </head>
+
 <body>
 
 <h1>Calculadora de Painel de LED</h1>
 
 <div class="container">
-  <div class="left">
-    <label>Largura do painel (m)</label>
-    <input id="painelLargura" type="number" step="0.01">
 
-    <label>Altura do painel (m)</label>
-    <input id="painelAltura" type="number" step="0.01">
+<!-- CONTROLES -->
+<div class="left">
 
-    <label>Modelo</label>
-    <select id="modelo"></select>
+<label>Layout do preview</label>
+<select id="layout">
+  <option value="test">Test Pattern</option>
+  <option value="clean">Clean</option>
+</select>
 
-    <label>Cor do preview</label>
-    <input type="color" id="fundoPreview" value="#222222">
+<label><input type="checkbox" id="grid" checked> Mostrar grid</label>
+<label><input type="checkbox" id="numeros" checked> Mostrar numeração</label>
 
-    <button id="calcular" onclick="calcular()">Calcular</button>
-    <button id="toggleCadastro" onclick="toggleCadastro()">➕ Adicionar painel</button>
-    <button id="removerPainel" onclick="removerPainel()">🗑 Remover painel</button>
+<label>Cor fundo (clean)</label>
+<input type="color" id="cor" value="#ffffff">
 
-    <div id="cadastroPainel" style="display:none">
-      <h2>Novo Painel</h2>
-      <label>Nome</label><input id="novoNome">
-      <label>Largura gabinete (cm)</label><input id="novoLargura" type="number">
-      <label>Altura gabinete (cm)</label><input id="novoAltura" type="number">
-      <label>Resolução L</label><input id="novoPxL" type="number">
-      <label>Resolução A</label><input id="novoPxA" type="number">
-      <label>Consumo médio (W/m²)</label><input id="novoMedio" type="number">
-      <label>Consumo máximo (W/m²)</label><input id="novoMax" type="number">
-      <label>Tensão (V)</label><input id="novoTensao" type="number">
-      <button onclick="adicionarPainel()">Salvar</button>
-    </div>
+<label>Logo do cliente</label>
+<input type="file" id="logo" accept="image/*">
 
-    <table>
-      <tr><th>Placas L x A</th><th>Total</th></tr>
-      <tr><td id="rPlacasL">-</td><td id="rTotal">-</td></tr>
-    </table>
+<label>Largura painel (m)</label>
+<input id="largura" type="number" step="0.01">
 
-    <table>
-      <tr><th>Tamanho Final (m)</th><th>Resolução</th></tr>
-      <tr><td id="rTamanho">-</td><td id="rResolucao">-</td></tr>
-    </table>
+<label>Altura painel (m)</label>
+<input id="altura" type="number" step="0.01">
 
-    <table>
-      <tr><th>Área (m²)</th><th>Densidade (px/m²)</th></tr>
-      <tr><td id="rArea">-</td><td id="rDensidade">-</td></tr>
-    </table>
+<label>Modelo</label>
+<select id="modelo"></select>
 
-    <table>
-      <tr><th>Potência Média (W)</th><th>Potência Máx (W)</th><th>Corrente (A)</th></tr>
-      <tr><td id="rPotencia"></td><td id="rPotMax"></td><td id="rCorrente"></td></tr>
-    </table>
+<button class="btn-blue" id="btnNovo">➕ Novo painel</button>
+<button class="btn-red" id="btnExcluir">🗑 Excluir painel</button>
 
-  </div>
+<div id="boxNovo" style="display:none;margin-top:10px">
+  <label>Nome</label><input id="npNome">
+  <label>Largura (mm)</label><input id="npL">
+  <label>Altura (mm)</label><input id="npA">
+  <label>Pixels L</label><input id="npPxL">
+  <label>Pixels A</label><input id="npPxA">
+  <label>Potência média (W/m²)</label><input id="npMed">
+  <label>Potência máx (W/m²)</label><input id="npMax">
+  <label>Tensão (V)</label><input id="npV" value="220">
+  <button class="btn-green" id="salvarPainel">Salvar</button>
+</div>
 
-  <div class="right">
-    <canvas id="preview" width="700" height="450"></canvas>
-  </div>
+<button class="btn-green" id="calcular">Calcular</button>
+<button class="btn-orange" id="exportTech">📸 Exportar técnico</button>
+<button class="btn-cyan" id="exportCliente">🧾 Exportar cliente</button>
+
+</div>
+
+<!-- PREVIEW -->
+<div class="right">
+  <canvas id="preview"></canvas>
+</div>
+
 </div>
 
 <footer>
-Desenvolvido por <strong>Rafonsky</strong> © <span id="ano"></span>
+Desenvolvido por Rafonsky © <span id="ano"></span>
 </footer>
 
 <script>
-document.getElementById("ano").innerText = new Date().getFullYear();
+/* =========================
+   ESTADO GLOBAL
+========================= */
+const estado={
+  painel:null,
+  pl:0,
+  pa:0,
+  layout:"test",
+  grid:true,
+  numeros:true,
+  cor:"#ffffff",
+  logo:null
+};
 
-let paineis = JSON.parse(localStorage.getItem("paineis")) || {};
+/* =========================
+   TEST PATTERN
+========================= */
+const imgTestPattern=new Image();
+imgTestPattern.src="test-pattern.png";
 
-function salvar() { localStorage.setItem("paineis", JSON.stringify(paineis)); }
+/* =========================
+   LIMITES FIXOS DO PREVIEW
+========================= */
+let previewBounds=null;
 
-function atualizar() {
-  modelo.innerHTML = '<option value="">Selecione</option>';
-  for(let p in paineis){
-    let o = document.createElement("option");
-    o.value = p; o.textContent = p;
-    modelo.appendChild(o);
+function obterBoundsPreview(){
+  if(previewBounds) return previewBounds;
+  const r=preview.parentElement.getBoundingClientRect();
+  previewBounds={w:r.width,h:r.height};
+  return previewBounds;
+}
+
+/* =========================
+   PAINÉIS (persistente)
+========================= */
+const paineis=JSON.parse(localStorage.getItem("paineis")) || {
+  "Painel 50x100":{
+    larguraMM:500,alturaMM:1000,
+    pxL:168,pxA:336,
+    medio:50,max:150,tensao:220
   }
+};
+
+function salvarPaineis(){
+  localStorage.setItem("paineis",JSON.stringify(paineis));
 }
 
-function toggleCadastro(){
-  cadastroPainel.style.display = cadastroPainel.style.display === "none" ? "block" : "none";
+function atualizarModelos(){
+  modelo.innerHTML="";
+  for(const p in paineis)
+    modelo.innerHTML+=`<option>${p}</option>`;
 }
+atualizarModelos();
 
-function adicionarPainel(){
-  paineis[novoNome.value] = {
-    larguraMM: Number(novoLargura.value)*10,
-    alturaMM: Number(novoAltura.value)*10,
-    pxL: Number(novoPxL.value),
-    pxA: Number(novoPxA.value),
-    medio: Number(novoMedio.value),
-    max: Number(novoMax.value),
-    tensao: Number(novoTensao.value)
+/* =========================
+   EVENTOS UI
+========================= */
+layout.onchange=e=>{estado.layout=e.target.value; redraw();};
+grid.onchange=e=>{estado.grid=e.target.checked; redraw();};
+numeros.onchange=e=>{estado.numeros=e.target.checked; redraw();};
+cor.oninput=e=>{estado.cor=e.target.value; redraw();};
+
+logo.onchange=e=>{
+  const r=new FileReader();
+  r.onload=()=>{estado.logo=r.result; redraw();};
+  r.readAsDataURL(e.target.files[0]);
+};
+
+btnNovo.onclick=()=>{
+  boxNovo.style.display=boxNovo.style.display==="none"?"block":"none";
+};
+
+salvarPainel.onclick=()=>{
+  paineis[npNome.value]={
+    larguraMM:+npL.value,
+    alturaMM:+npA.value,
+    pxL:+npPxL.value,
+    pxA:+npPxA.value,
+    medio:+npMed.value,
+    max:+npMax.value,
+    tensao:+npV.value
   };
-  salvar(); atualizar(); toggleCadastro();
-}
+  salvarPaineis();
+  atualizarModelos();
+  boxNovo.style.display="none";
+};
 
-function removerPainel(){
-  const m = modelo.value;
-  if(!m) return alert("Selecione um painel");
-  if(confirm(`Remover "${m}"?`)){
-    delete paineis[m];
-    salvar(); atualizar();
+btnExcluir.onclick=()=>{
+  if(confirm("Excluir painel?")){
+    delete paineis[modelo.value];
+    salvarPaineis();
+    atualizarModelos();
   }
+};
+
+calcular.onclick=calcularPainel;
+
+/* =========================
+   CÁLCULO PRINCIPAL
+========================= */
+function calcularPainel(){
+  const p=paineis[modelo.value];
+  if(!p) return;
+
+  const w=+largura.value;
+  const h=+altura.value;
+
+  estado.pl=Math.ceil(w*1000/p.larguraMM);
+  estado.pa=Math.ceil(h*1000/p.alturaMM);
+  estado.painel=p;
+
+  redraw();
 }
 
-function shadeColor(color, percent) {
-  let R=parseInt(color.substring(1,3),16);
-  let G=parseInt(color.substring(3,5),16);
-  let B=parseInt(color.substring(5,7),16);
-  R = Math.min(255,parseInt(R*(100+percent)/100));
-  G = Math.min(255,parseInt(G*(100+percent)/100));
-  B = Math.min(255,parseInt(B*(100+percent)/100));
-  return "#" + R.toString(16).padStart(2,'0') + G.toString(16).padStart(2,'0') + B.toString(16).padStart(2,'0');
+/* =========================
+   DESENHO DO PREVIEW
+========================= */
+function redraw(){
+  if(!estado.painel) return;
+  desenharPreview(estado.pl,estado.pa,estado.painel);
 }
 
-function calcular(){
-  const p = paineis[modelo.value];
-  if(!p) { alert("Selecione um painel"); return; }
-  const larguraM = Number(painelLargura.value);
-  const alturaM = Number(painelAltura.value);
-  if(larguraM<=0 || alturaM<=0){ alert("Insira dimensões válidas"); return; }
+function desenharPreview(pl,pa,p){
+  const c=preview,ctx=c.getContext("2d");
+  const {w:maxW,h:maxH}=obterBoundsPreview();
 
-  const placasL = Math.ceil(larguraM*1000/p.larguraMM);
-  const placasA = Math.ceil(alturaM*1000/p.alturaMM);
-  const total = placasL*placasA;
+  const ratio=(pa*p.alturaMM)/(pl*p.larguraMM);
+  let w=maxW,h=w*ratio;
+  if(h>maxH){h=maxH;w=h/ratio;}
 
-  const tamanhoL = (placasL*p.larguraMM/1000).toFixed(2);
-  const tamanhoA = (placasA*p.alturaMM/1000).toFixed(2);
-
-  const resolL = placasL*p.pxL;
-  const resolA = placasA*p.pxA;
-
-  const area = (tamanhoL*tamanhoA).toFixed(2);
-  const densidade = Math.round((resolL*resolA)/area);
-
-  const potMed = (area*p.medio).toFixed(0);
-  const potMax = (area*p.max).toFixed(0);
-  const corrente = (potMed/p.tensao).toFixed(2);
-
-  rPlacasL.innerText = `${placasL} x ${placasA}`;
-  rTotal.innerText = total;
-  rTamanho.innerText = `${tamanhoL} x ${tamanhoA}`;
-  rResolucao.innerText = `${resolL} x ${resolA}`;
-  rArea.innerText = area;
-  rDensidade.innerText = densidade;
-  rPotencia.innerText = potMed;
-  rPotMax.innerText = potMax;
-  rCorrente.innerText = corrente;
-
-  desenharPreview(placasL, placasA, p, modelo.value, fundoPreview.value);
-}
-
-function desenharPreview(placasL, placasA, painel, modelo, fundo){
-  const canvas = preview;
-  const ctx = canvas.getContext("2d");
-  const maxWidth = canvas.parentElement.clientWidth*0.95;
-  const maxHeight = canvas.parentElement.clientHeight*0.95;
-
-  let w = maxWidth;
-  let h = w*(placasA*painel.alturaMM)/(placasL*painel.larguraMM);
-  if(h>maxHeight){ const scale=maxHeight/h; h=maxHeight; w*=scale; }
-
-  canvas.width=w;
-  canvas.height=h;
+  /* Retina */
+  c.width=w*2; c.height=h*2;
+  c.style.width=w+"px";
+  c.style.height=h+"px";
+  ctx.setTransform(2,0,0,2,0,0);
   ctx.clearRect(0,0,w,h);
 
-  const c1 = shadeColor(fundo,15);
-  const c2 = shadeColor(fundo,-15);
-  const size=40;
-  for(let y=0;y<h;y+=size){
-    for(let x=0;x<w;x+=size){
-      ctx.fillStyle=((x/size + y/size)%2===0)?c1:c2;
-      ctx.fillRect(x,y,size,size);
+  /* Fundo */
+  if(estado.layout==="test"){
+    if(imgTestPattern.complete)
+      ctx.drawImage(imgTestPattern,0,0,w,h);
+  }else{
+    ctx.fillStyle=estado.cor;
+    ctx.fillRect(0,0,w,h);
+  }
+
+  /* Logo */
+  if(estado.logo){
+    const i=new Image();
+    i.onload=()=>{
+      const s=Math.min(w,h)*0.35/Math.max(i.width,i.height);
+      ctx.drawImage(i,(w-i.width*s)/2,(h-i.height*s)/2,i.width*s,i.height*s);
+    };
+    i.src=estado.logo;
+  }
+
+  /* Grid */
+  if(estado.grid){
+    ctx.strokeStyle="rgba(255,255,255,.4)";
+    for(let i=1;i<pl;i++){
+      ctx.beginPath();
+      ctx.moveTo(i*w/pl,0);
+      ctx.lineTo(i*w/pl,h);
+      ctx.stroke();
+    }
+    for(let j=1;j<pa;j++){
+      ctx.beginPath();
+      ctx.moveTo(0,j*h/pa);
+      ctx.lineTo(w,j*h/pa);
+      ctx.stroke();
     }
   }
 
-  ctx.strokeStyle='rgba(255,255,255,0.3)';
-  ctx.lineWidth=1;
-  const step=40;
-  for(let i=-h;i<w;i+=step){
-    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+h,h); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(i,h); ctx.lineTo(i+h,0); ctx.stroke();
+  /* Numeração */
+  if(estado.numeros){
+    ctx.fillStyle="#fff";
+    ctx.font="12px Arial";
+    ctx.textAlign="center";
+    for(let i=0;i<pl;i++)
+      ctx.fillText(i+1,(i+.5)*w/pl,14);
+    for(let j=0;j<pa;j++)
+      ctx.fillText(j+1,14,(j+.5)*h/pa);
   }
-
-  const cx=w/2, cy=h/2;
-  const maxR=Math.min(w,h)/2*0.9;
-  ctx.strokeStyle='rgba(255,255,255,0.4)';
-  ctx.lineWidth=1;
-  for(let r=maxR;r>20;r-=maxR/6){
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.stroke();
-  }
-
-  // Retângulo central com nome e resolução
-  const boxW=220, boxH=70;
-  ctx.fillStyle='rgba(0,0,0,0.7)';
-  ctx.strokeStyle='rgba(255,255,255,0.7)';
-  ctx.lineWidth=2;
-  ctx.fillRect(cx-boxW/2,cy-boxH/2,boxW,boxH);
-  ctx.strokeRect(cx-boxW/2,cy-boxH/2,boxW,boxH);
-
-  ctx.fillStyle='#fff';
-  ctx.font='bold 14px monospace';
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-
-  const tamanhoL = (placasL*painel.larguraMM/1000).toFixed(2);
-  const tamanhoA = (placasA*painel.alturaMM/1000).toFixed(2);
-  const resolL = placasL*painel.pxL;
-  const resolA = placasA*painel.pxA;
-
-  ctx.fillText(`MODELO: ${modelo.toUpperCase()}`, cx, cy-20);
-  ctx.fillText(`RESOLUÇÃO: ${resolL} x ${resolA}`, cx, cy);
-  ctx.fillText(`TAMANHO: ${tamanhoL}m x ${tamanhoA}m`, cx, cy+20);
 }
 
-atualizar();
+/* =========================
+   EXPORTAÇÃO
+========================= */
+function exportar(limpo){
+  const g=estado.grid,n=estado.numeros;
+  if(limpo){estado.grid=false;estado.numeros=false;}
+  redraw();
+  setTimeout(()=>{
+    const a=document.createElement("a");
+    a.download="painel-led.png";
+    a.href=preview.toDataURL("image/png");
+    a.click();
+    estado.grid=g;estado.numeros=n;
+    redraw();
+  },50);
+}
+
+exportTech.onclick=()=>exportar(false);
+exportCliente.onclick=()=>exportar(true);
+
+/* =========================
+   INIT
+========================= */
+ano.innerText=new Date().getFullYear();
 </script>
+
 </body>
 </html>
